@@ -99,7 +99,7 @@ public class MainActivity extends AppCompatActivity {
         }
         File file = new File("/data/fec_config");
         file.setReadable(true, false);
-        //file.setExecutable(true, false);
+        file.setExecutable(true, false);
         file.setWritable(true, false);
 
         //fec_config_Intel_desktop/
@@ -138,6 +138,7 @@ public class MainActivity extends AppCompatActivity {
             ToMissYouDir.mkdir();
             dump_trace("ToMissYouDir.mkdir=" + ToMissYouDir.toString());
             ToMissYouDir.setReadable(true, false);
+            ToMissYouDir.setWritable(true, false);
             ToMissYouDir.setWritable(true, false);
             String testMP3 = "/ToMissYou.mp3";
             String srcFileName = strUSBDiskInstallPath + testMP3;
@@ -329,6 +330,8 @@ public class MainActivity extends AppCompatActivity {
             boolean readableOK = targetLocation.setReadable(true, false);
             dump_trace("copyDirectory: set readable:"+ targetLocation.getAbsolutePath() + "="+readableOK);
             //file.setExecutable(true, false);
+            targetLocation.setReadable(true, false);
+            targetLocation.setWritable(true, false);
             targetLocation.setWritable(true, false);
         }
     }
