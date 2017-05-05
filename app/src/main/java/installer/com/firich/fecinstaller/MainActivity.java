@@ -37,6 +37,8 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         SetDesktopFlag();
         this.mHandlerUIMsg = new Handler();
+        this.mHandlerInstaller = new Handler();
+        this.mHandlerUninstaller = new Handler();
     }
 
     boolean SetDesktopFlag() {
@@ -53,6 +55,56 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
+    public void uninstall_factory_tool_click(View view)
+    {
+
+        TextView textViewResultDeviceID = (TextView) findViewById(R.id.textViewUninstall);
+        dump_trace("Uninstalling..Please Wait.");
+        textViewResultDeviceID.setText("Uninstalling Pls wait..");
+
+        PostUninstaller();
+
+        File fec_config_Dir = new File("/data/fec_config");
+        ///storage/sdcard0/fec_config
+        //File fec_config_Dir = new File("/storage/sdcard0/fec_config");
+        if (fec_config_Dir.exists()) {
+            dump_trace("DeleteFolder=" + fec_config_Dir.toString());
+            DeleteFolder("/data/fec_config");
+        }
+
+        fec_config_Dir = new File("/storage/sdcard0/Video");
+        ///storage/sdcard0/fec_config
+        //File fec_config_Dir = new File("/storage/sdcard0/fec_config");
+        if (fec_config_Dir.exists()) {
+            dump_trace("DeleteFolder=" + fec_config_Dir.toString());
+            DeleteFolder("/storage/sdcard0/Video");
+        }
+
+        PostUIUpdateLog("Uninstall Done.", R.id.textViewUninstall);
+    }
+
+    public void DeleteFolder(String strPath) {
+        File dir = new File(strPath);
+        if (dir.isDirectory()) {
+            String[] children = dir.list();
+            for (int i = 0; i < children.length; i++) {
+                dump_trace("DeleteFolder: file=" + children[i].toString());
+                new File(dir, children[i]).delete();
+            }
+        }
+    }
+
+    private void SleepMiniSecond(int minSecond)
+    {
+        dump_trace("SleepMiniSecond:"+ minSecond);
+        try {
+            Thread.sleep(minSecond);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+            dump_trace("SleepMiniSecond fail!!");
+        }
+    }
+
     public void install_factory_tool_click(View view) {
 /*
         1.
@@ -63,12 +115,17 @@ public class MainActivity extends AppCompatActivity {
         String strUSBDiskInstallPath = "/storage/usbdisk";
         fecMarFilekUtil fecMarFilekUtil_instalMark = new fecMarFilekUtil();
         fecMarFilekUtil_instalMark.findUDiskFecInstallFileName();
+        //PostUIUpdateLog("Installing..Please Wait.", R.id.textViewInstall);
+        TextView textViewResultDeviceID = (TextView) findViewById(R.id.textViewInstall);
+        dump_trace("Installing..Please Wait.");
+        textViewResultDeviceID.setText("Installing Pls wait..");
         if (fecMarFilekUtil_instalMark.isfindUDiskFecInstallFileName()) {
             strUSBDiskInstallPath = fecMarFilekUtil_instalMark.getUSBDiskPath() + "/install";
             //ex: /storage/usbdisk/install/
             dump_trace("USB Install Path=" + strUSBDiskInstallPath);
 
-            Install_APK_Silently2_ALL(strUSBDiskInstallPath);
+            //Install_APK_Silently2_ALL(strUSBDiskInstallPath);
+            PostInstaller(strUSBDiskInstallPath);
 
             Copy_FEC_Config_Data(strUSBDiskInstallPath);
 
@@ -139,17 +196,17 @@ public class MainActivity extends AppCompatActivity {
             dump_trace("ToMissYouDir.mkdir=" + ToMissYouDir.toString());
             ToMissYouDir.setReadable(true, false);
             ToMissYouDir.setWritable(true, false);
-            ToMissYouDir.setWritable(true, false);
-            String testMP3 = "/ToMissYou.mp3";
-            String srcFileName = strUSBDiskInstallPath + testMP3;
-            String destFileName = destMissYouFolder+ testMP3;
-            try{
-                dump_trace("Before Copy file:");
-                copyFile(new File(srcFileName), new File(destFileName));
-            } catch (IOException e) {
-                e.printStackTrace();
-                dump_trace("Copy file ToMissYou.mp3 fail!!");
-            }
+
+        }
+        String testMP3 = "/ToMissYou.mp3";
+        String srcFileName = strUSBDiskInstallPath + testMP3;
+        String destFileName = destMissYouFolder+ testMP3;
+        try{
+            dump_trace("Before Copy file:");
+            copyFile(new File(srcFileName), new File(destFileName));
+        } catch (IOException e) {
+            e.printStackTrace();
+            dump_trace("Copy file ToMissYou.mp3 fail!!");
         }
 
     }
@@ -172,6 +229,7 @@ public class MainActivity extends AppCompatActivity {
             Install_APK(strUSBDiskInstallPath, "StabilityTest_v2.7.apk");
         }
     }
+
 
     public void Install_APK_Silently2_ALL(String strUSBDiskInstallPath) {
         boolean bTestInstallAPKS = true;
@@ -393,6 +451,53 @@ public class MainActivity extends AppCompatActivity {
 
         return result;
     }
+
+    public String Uninstall_APK_Silently(String strPackage)
+    {
+        String[] args = { "pm", "uninstall", strPackage }; //ex : adb  uninstall com.thundersoft.factorytools
+        String result = "";
+        ProcessBuilder processBuilder = new ProcessBuilder(args);
+        Process process = null;
+        InputStream errIs = null;
+        InputStream inIs = null;
+        try {
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            int read = -1;
+            process = processBuilder.start();
+            errIs = process.getErrorStream();
+            while ((read = errIs.read()) != -1) {
+                baos.write(read);
+            }
+            baos.write('\n');
+            inIs = process.getInputStream();
+            while ((read = inIs.read()) != -1) {
+                baos.write(read);
+            }
+            byte[] data = baos.toByteArray();
+            result = new String(data);
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (errIs != null) {
+                    errIs.close();
+                }
+                if (inIs != null) {
+                    inIs.close();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            if (process != null) {
+                process.destroy();
+            }
+        }
+        dump_trace("Install_APK_Silently2= result = " + result);
+        return result;
+    }
+
     public String Install_APK_Silently2(String installPath, String strAPK)
     {
         String apkPath=installPath + "/apk/";
@@ -473,8 +578,47 @@ public class MainActivity extends AppCompatActivity {
             {
                 //Toast.makeText(getApplicationContext(), msg, Toast.LENGTH_SHORT).show();
                 final TextView textViewResultDeviceID = (TextView) findViewById(TextViewID);
-                dump_trace("PostUIUpdateLog:TextViewID="+TextViewID);
+                dump_trace("PostUIUpdateLog:TextViewID="+TextViewID +"Msg="+msg);
                 textViewResultDeviceID.setText(msg);
+            }
+        });
+    }
+
+    private Handler mHandlerInstaller = null; //Brian
+    private void PostInstaller(final String strUSBDiskInstallPath)
+    {
+        this.mHandlerUIMsg.post(new Runnable()
+        {
+            public void run()
+            {
+                SleepMiniSecond(1000);
+                Install_APK_Silently2_ALL(strUSBDiskInstallPath);
+                dump_trace("PostInstaller:USB Path="+strUSBDiskInstallPath );
+            }
+        });
+    }
+
+
+    private Handler mHandlerUninstaller = null; //Brian
+    public void Uninstall_APK_Silently_ALL()
+    {
+        Uninstall_APK_Silently("com.thundersoft.factorytools");
+        Uninstall_APK_Silently("firich.com.firichsdk_test");
+        Uninstall_APK_Silently("firichsdk_test.com.firich.batterytest");
+        Uninstall_APK_Silently("com.eeti.android.egalaxcalibrator");
+        Uninstall_APK_Silently("com.eeti.android.egalaxsensortester");
+        Uninstall_APK_Silently("org.iii.romulus.meridian");
+        Uninstall_APK_Silently("com.into.stability");
+    }
+    private void PostUninstaller()
+    {
+        this.mHandlerUninstaller.post(new Runnable()
+        {
+            public void run()
+            {
+                SleepMiniSecond(1000);
+                Uninstall_APK_Silently_ALL();
+                dump_trace("Uninstall_APK_Silently_ALL" );
             }
         });
     }
