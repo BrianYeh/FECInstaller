@@ -130,7 +130,8 @@ public class MainActivity extends AppCompatActivity {
         //adb shell mkdir -p /storage/sdcard0/Video
         //adb push ToMissYou.mp3 /storage/sdcard0/Video
 
-        File ToMissYouDir = new File("/storage/sdcard0/Video");
+        String destMissYouFolder= "/storage/sdcard0/Video";
+        File ToMissYouDir = new File(destMissYouFolder);
         ///storage/sdcard0/fec_config
         //File fec_config_Dir = new File("/storage/sdcard0/fec_config");
         if (!ToMissYouDir.exists()) {
@@ -138,6 +139,16 @@ public class MainActivity extends AppCompatActivity {
             dump_trace("ToMissYouDir.mkdir=" + ToMissYouDir.toString());
             ToMissYouDir.setReadable(true, false);
             ToMissYouDir.setWritable(true, false);
+            String testMP3 = "/ToMissYou.mp3";
+            String srcFileName = strUSBDiskInstallPath + testMP3;
+            String destFileName = destMissYouFolder+ testMP3;
+            try{
+                dump_trace("Before Copy file:");
+                copyFile(new File(srcFileName), new File(destFileName));
+            } catch (IOException e) {
+                e.printStackTrace();
+                dump_trace("Copy file ToMissYou.mp3 fail!!");
+            }
         }
 
     }
@@ -146,9 +157,9 @@ public class MainActivity extends AppCompatActivity {
         //With prompt to confirm to install APK.
         if (bTestInstallAPKS) {
             if (g_bIsDesktop) {
-                Install_APK(strUSBDiskInstallPath, "FactoryTools_Desktop_1009.apk");
+                Install_APK(strUSBDiskInstallPath, "FactoryTools_Desktop.apk");
             } else {
-                Install_APK(strUSBDiskInstallPath, "FactoryTools_Tablet_1009.apk");
+                Install_APK(strUSBDiskInstallPath, "FactoryTools_Tablet.apk");
             }
             Install_APK(strUSBDiskInstallPath, "battery_test-signed.apk");
             Install_APK(strUSBDiskInstallPath, "cputemp.apk");
@@ -162,12 +173,12 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void Install_APK_Silently2_ALL(String strUSBDiskInstallPath) {
-        boolean bTestInstallAPKS = false;
+        boolean bTestInstallAPKS = true;
         if (bTestInstallAPKS) {
             if (g_bIsDesktop) {
-                Install_APK_Silently2(strUSBDiskInstallPath, "FactoryTools_Desktop_1009.apk");
+                Install_APK_Silently2(strUSBDiskInstallPath, "FactoryTools_Desktop.apk");
             } else {
-                Install_APK_Silently2(strUSBDiskInstallPath, "FactoryTools_Tablet_1009.apk");
+                Install_APK_Silently2(strUSBDiskInstallPath, "FactoryTools_Tablet.apk");
             }
             Install_APK_Silently2(strUSBDiskInstallPath, "battery_test-signed.apk");
             Install_APK_Silently2(strUSBDiskInstallPath, "cputemp.apk");
@@ -321,6 +332,39 @@ public class MainActivity extends AppCompatActivity {
             targetLocation.setWritable(true, false);
         }
     }
+
+    // If targetLocation does not exist, it will be created.
+    //http://stackoverflow.com/questions/5715104/copy-files-from-a-folder-of-sd-card-into-another-folder-of-sd-card
+    public void copyFile(File sourceLocation , File targetLocation)
+            throws IOException {
+        // make sure the directory we plan to store the recording in exists
+        File directory = targetLocation.getParentFile();
+        if (directory != null && !directory.exists() && !directory.mkdirs()) {
+            throw new IOException("Cannot create dir " + directory.getAbsolutePath());
+        }
+
+        InputStream in = new FileInputStream(sourceLocation);
+        OutputStream out = new FileOutputStream(targetLocation);
+
+        dump_trace("copyFile:sourceLocation"+sourceLocation.getAbsolutePath());
+        dump_trace("copyFile:targetLocation"+targetLocation.getAbsolutePath());
+        // Copy the bits from instream to outstream
+        byte[] buf = new byte[1024];
+        int len;
+        while ((len = in.read(buf)) > 0) {
+            out.write(buf, 0, len);
+        }
+        in.close();
+        out.close();
+        //File fileMode = new File(targetLocation);
+        boolean readableOK = targetLocation.setReadable(true, false);
+        dump_trace("copyFile: set readable:"+ targetLocation.getAbsolutePath() + "="+readableOK);
+        //file.setExecutable(true, false);
+        targetLocation.setWritable(true, false);
+
+    }
+
+
 
     public String Copy_config_data(String installPath)
     {

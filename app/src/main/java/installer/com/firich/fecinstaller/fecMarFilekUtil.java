@@ -1,6 +1,7 @@
 package installer.com.firich.fecinstaller;
 
 import android.os.Build;
+import android.util.Log;
 
 import java.io.File;
 
@@ -16,6 +17,16 @@ public class fecMarFilekUtil {
     {
 
     }
+
+    private boolean bDebugOn = true;
+    private boolean g_bIsDesktop = false;
+
+    private void dump_trace(String bytTrace) {
+        if (bDebugOn)
+            Log.d("fecMarFilekUtil:", bytTrace);
+    }
+
+
     public String getUSBDiskPath()
     {
         return  strUSBDiskPath;
@@ -28,10 +39,11 @@ public class fecMarFilekUtil {
     {
         // check feclog file exist?
         String strStorage="/storage/";
-        String path = "/storage/udisk/fec_install.txt";
+        String path = "/storage/udisk/install/fec_install.txt";
         String strfeclog = "fec_install.txt";
         String strUDisk4_4 = "udisk";
         String strUSBDisk5_1 = "usbdisk";
+        String strInstallPath="/install/";
         String strDisk=strUDisk4_4;
         String strDiskNum=strUDisk4_4;
         boolean findFeclogFile = false;
@@ -49,7 +61,8 @@ public class fecMarFilekUtil {
             strDisk = strUSBDisk5_1;
             strDiskNum = strUSBDisk5_1;
         }
-        path = strStorage + strDiskNum + "/" + strfeclog;
+        //path = strStorage + strDiskNum + "/" + strfeclog;
+        path = strStorage + strDiskNum + strInstallPath + strfeclog;
         strUSBDiskPath = strStorage + strDiskNum;
         logFile = new File(path);
 
@@ -67,10 +80,12 @@ public class fecMarFilekUtil {
                     strDisk = strDiskNum + Integer.toString(diskNumber); //ex:usbdisk1 , usbdisk2 ..
                 }
             }
-            path = strStorage + strDisk + "/" + strfeclog; //ex: "/storage/udisk/fec_install.txt"
+            //path = strStorage + strDisk + "/" + strfeclog; //ex: "/storage/udisk/fec_install.txt"
+            path = strStorage + strDisk + strInstallPath + strfeclog; //ex: "/storage/udisk/fec_install.txt"
             strUSBDiskPath = strStorage + strDisk;
             logFile = new File(path);
         } while (diskNumber < 9);
+        dump_trace("fecMarFilekUtil:install tag:fec_install.txt path="+ path);
         return strUSBDiskPath;
 
     }
